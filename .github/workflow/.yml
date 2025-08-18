@@ -1,0 +1,80 @@
+ name: Build, Test & Deploy App
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  backend:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 16   
+
+      - name: Install backend dependencies
+        run: |
+          cd server
+          npm install
+
+      - name: Run backend tests
+        run: |
+          cd server
+          npm test   # Fails pipeline if tests fail
+
+      - name: Log in to GHCR
+        run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u "${{ github.actor }}" --password-stdin
+
+      - name: Build backend image
+        run: |
+          cd server
+          docker build \
+            --build-arg ATLAS_URI=${{ secrets.ATLAS_URI }} \
+            -t ghcr.io/${{ github.repository_owner }}/wk6_assesment-backend:latest .
+
+      - name: Push backend image
+        run: docker push ghcr.io/${{ github.repository_owner }}/wk6_assesment-backend:latest
+
+      - name: Deploy backend to Render
+        run: curl -X POST ${{ secrets.RENDER_BACKEND_HOOK }}
+
+  frontend:
+    runs-on: ubuntu-latest
+    needs: backend   #  Only runs if backend succeeds
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 16
+
+      - name: Install frontend dependencies
+        run: |
+          cd app
+          npm install
+
+      - name: Run frontend tests
+        run: |
+          cd app
+          npm test -- --watchAll=false   #  Ensures Jest exits after running tests
+
+      - name: Log in to GHCR
+        run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u "${{ github.actor }}" --password-stdin
+
+      - name: Build frontend image
+        run: |
+          cd app
+          docker build -t ghcr.io/${{ github.repository_owner }}/wk6_assesment-frontend:latest .
+
+      - name: Push frontend image
+        run: docker push ghcr.io/${{ github.repository_owner }}/wk6_assesment-frontend:latest
+
+      - name: Deploy frontend to Render
+        run: curl -X POST ${{ secrets.RENDER_FRONTEND_HOOK }}
