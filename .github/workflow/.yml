@@ -35,10 +35,10 @@ jobs:
           cd server
           docker build \
             --build-arg ATLAS_URI=${{ secrets.ATLAS_URI }} \
-            -t ghcr.io/${{ github.repository_owner }}/wk6_assesment-backend:latest .
+            -t ghcr.io/${{ github.chyokore }}/wk6_assesment-backend:latest .
 
       - name: Push backend image
-        run: docker push ghcr.io/${{ github.repository_owner }}/wk6_assesment-backend:latest
+        run: docker push ghcr.io/${{ github.chyokore }}/wk6_assesment-backend:latest
 
       - name: Deploy backend to Render
         run: curl -X POST ${{ secrets.RENDER_BACKEND_HOOK }}
@@ -71,10 +71,10 @@ jobs:
       - name: Build frontend image
         run: |
           cd app
-          docker build -t ghcr.io/${{ github.repository_owner }}/wk6_assesment-frontend:latest .
+          docker build -t ghcr.io/${{ github.chyokore}}/wk6_assesment-frontend:latest .
 
       - name: Push frontend image
-        run: docker push ghcr.io/${{ github.repository_owner }}/wk6_assesment-frontend:latest
+        run: docker push ghcr.io/${{ github.chyokore }}/wk6_assesment-frontend:latest
 
       - name: Deploy frontend to Render
         run: curl -X POST ${{ secrets.RENDER_FRONTEND_HOOK }}
